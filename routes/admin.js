@@ -26,7 +26,6 @@ router.post('/', function(req, res) {
 //sua sp
 router.put('/:movie_id', function(req, res){
     let data = req.body;
-    console.log(data);
     let id = req.params.movie_id;
     let sql = 'UPDATE moviess SET ? WHERE movie_id = ?';
     db.query(sql, [data, id], (err, d)=> {
@@ -45,15 +44,26 @@ router.delete('/:movie_id', function(req, res){
 });
 //
 router.get('/quanlynguoidung', function(req,res){
-    let sql = ' SELECT id_user, fullname, username, password FROM users';
+    let sql = ' SELECT * FROM userss';
     db.query(sql,(err,data)=>{
         if(err) res.json({"Thông báo":"Lỗi ",err});
         else res.json(data);
     });
 });
-router.delete('/xoanguoidung/:id_user', function(req,res){
-    let id = req.params.id_user;
-    let sql = ' DELETE FROM users WHERE id_user = ?';
+//
+router.put('/suathongtin/:user_id', function(req,res){
+    let data = req.body;
+    let id = req.params.user_id;
+    let sql = 'UPDATE userss SET ? WHERE user_id = ?';
+    db.query(sql, [data,id],(err,data)=>{
+        if(err) res.json({"Thông báo":"Lỗi", err});
+        else res.json({"Thông báo":"Cập nhật thành công"});
+    });
+});
+//
+router.delete('/xoanguoidung/:user_id', function(req,res){
+    let id = req.params.user_id;
+    let sql = ' DELETE FROM userss WHERE user_id = ?';
     db.query(sql, id,(err,data)=>{
         if(err) res.json({"Thông báo":"Lỗi", err});
         else res.json({"Thông báo":"xóa thành công"});
