@@ -66,5 +66,5 @@ router.get('/theloai/:id_theloai', function(req,res){
         else res.json(data);
     });
 });
-//
+
 module.exports = router;

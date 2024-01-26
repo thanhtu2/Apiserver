@@ -34,13 +34,29 @@ router.put('/:movie_id', function(req, res){
         else res.json({"Thông báo":"Đã cập nhật sản phẩm"});
     });
 });
-//xoa sp
+//xoa 
 router.delete('/:movie_id', function(req, res){
     let id = req.params.movie_id;
     let sql = 'DELETE FROM moviess WHERE movie_id = ?';
     db.query(sql, id, (err, d)=>{
         if(err) res.json({"Thông báo":"Không thể xóa", err});
         else res.json({"Thông báo":"Xóa thành công"});
+    });
+});
+//
+router.get('/quanlynguoidung', function(req,res){
+    let sql = ' SELECT id_user, fullname, username, password FROM users';
+    db.query(sql,(err,data)=>{
+        if(err) res.json({"Thông báo":"Lỗi ",err});
+        else res.json(data);
+    });
+});
+router.delete('/xoanguoidung/:id_user', function(req,res){
+    let id = req.params.id_user;
+    let sql = ' DELETE FROM users WHERE id_user = ?';
+    db.query(sql, id,(err,data)=>{
+        if(err) res.json({"Thông báo":"Lỗi", err});
+        else res.json({"Thông báo":"xóa thành công"});
     });
 });
 module.exports = router;
