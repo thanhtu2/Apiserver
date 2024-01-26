@@ -13,8 +13,16 @@ db.connect((err) => {
         console.log('Admin Connected to the database');
     }
 });
-//them sp
-router.post('/', function(req, res) {
+//
+router.get('/quanlyphim', function(req,res){
+    let sql = ' SELECT * FROM moviess';
+    db.query(sql,(err,data)=>{
+        if(err) res.json({"Thông báo":"Lỗi ",err});
+        else res.json(data);
+    });
+});
+//them
+router.post('/themphim', function(req, res) {
     let data = req.body;
     console.log(data);
     let sql = 'INSERT INTO moviess SET ?';
@@ -23,8 +31,8 @@ router.post('/', function(req, res) {
         else res.json({"Thông báo":"Thêm thành công","id":data.insertId});
     });
 });
-//sua sp
-router.put('/:movie_id', function(req, res){
+//sua
+router.put('suaphim/:movie_id', function(req, res){
     let data = req.body;
     let id = req.params.movie_id;
     let sql = 'UPDATE moviess SET ? WHERE movie_id = ?';
@@ -34,7 +42,7 @@ router.put('/:movie_id', function(req, res){
     });
 });
 //xoa 
-router.delete('/:movie_id', function(req, res){
+router.delete('xoaphim/:movie_id', function(req, res){
     let id = req.params.movie_id;
     let sql = 'DELETE FROM moviess WHERE movie_id = ?';
     db.query(sql, id, (err, d)=>{
