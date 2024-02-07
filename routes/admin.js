@@ -4,7 +4,7 @@ var mysql = require('mysql');
 const app = express();
 
 var db = mysql.createConnection({
-    host:'localhost', user:'root', password:'', database:'book_movie'
+    host:'localhost', user:'root', password:'', database:'datn-movie.booking'
 });
 db.connect((err) => {
     if (err) {
@@ -32,19 +32,19 @@ router.post('/themphim', function(req, res) {
     });
 });
 //sua
-router.put('suaphim/:movie_id', function(req, res){
+router.put('suaphim/:id_phim', function(req, res){
     let data = req.body;
-    let id = req.params.movie_id;
-    let sql = 'UPDATE moviess SET ? WHERE movie_id = ?';
+    let id = req.params.id_phim;
+    let sql = 'UPDATE moviess SET ? WHERE id_phim = ?';
     db.query(sql, [data, id], (err, d)=> {
         if(err) res.json({"Thông báo":"Lỗi cập nhật", err});
         else res.json({"Thông báo":"Đã cập nhật sản phẩm"});
     });
 });
 //xoa 
-router.delete('xoaphim/:movie_id', function(req, res){
-    let id = req.params.movie_id;
-    let sql = 'DELETE FROM moviess WHERE movie_id = ?';
+router.delete('xoaphim/:id_phim', function(req, res){
+    let id = req.params.id_phim;
+    let sql = 'DELETE FROM moviess WHERE id_phim = ?';
     db.query(sql, id, (err, d)=>{
         if(err) res.json({"Thông báo":"Không thể xóa", err});
         else res.json({"Thông báo":"Xóa thành công"});
