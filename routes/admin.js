@@ -115,5 +115,16 @@ router.delete('/rap/xoarap/:id_rap', function(req,res){
         else res.json({"Thông báo":"Xóa thành công"});
     });
 });
-
+//doanhso
+router.get('/doanhthuphim', function(req,res){
+    let sql = `SELECT m.TenPhim AS TenPhim, IFNULL(FORMAT(SUM(b.TongGia), 0), 0) AS DoanhThu
+    FROM moviess m
+    LEFT JOIN booking b ON b.id_phim = m.id_phim
+    GROUP BY m.id_phim;
+    `;
+    db.query(sql, (err,data)=>{
+        if(err) res.json({"Thông báo":"Lỗi",err})
+        else res.json(data)
+    });
+});
 module.exports = router;
