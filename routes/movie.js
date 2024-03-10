@@ -1,10 +1,10 @@
 var express = require('express');
 var router = express.Router();
-var mysql = require('mysql');
+var mysql = require('mysql2');
 const app = express();
 
 var db = mysql.createConnection({
-    host: 'localhost', user: 'root', password: '', database:'datn-movie.booking'
+    host: 'localhost', user: 'root',  password: '', database:'bookingmovie'
 });
 db.connect((err) => {
     if (err) {
@@ -66,5 +66,31 @@ router.get('/theloai/:id_theloai', function(req,res){
         else res.json(data);
     });
 });
+// phim đang chiếu
 
+router.get('/dangchieu', (req, res) => {
+    const query = 'SELECT * FROM moviess WHERE status = "Đang Chiếu"';
+    db.query(query, (error, results) => {
+      if (error) throw error;
+      res.json(results);
+    });
+  });
+  // phim sắp chiếu
+
+router.get('/sapchieu', (req, res) => {
+    const query = 'SELECT * FROM moviess WHERE status = "Sắp Chiếu"';
+    db.query(query, (error, results) => {
+      if (error) throw error;
+      res.json(results);
+    });
+  });
+  // phim  chiếu sớm
+
+  router.get('/chieusom', (req, res) => {
+      const query = 'SELECT * FROM moviess WHERE status = "Chiếu Sớm"';
+      db.query(query, (error, results) => {
+        if (error) throw error;
+        res.json(results);
+      });
+    });
 module.exports = router;
