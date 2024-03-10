@@ -4,7 +4,7 @@ var mysql = require('mysql');
 const app = express();
 
 var db = mysql.createConnection({
-    host: 'localhost', user: 'root', password: '', database:'datn-movie.booking'
+    host: 'localhost', user: 'root', password: '', database:'datn-booking'
 });
 db.connect((err) => {
     if (err) {
@@ -66,5 +66,18 @@ router.get('/theloai/:id_theloai', function(req,res){
         else res.json(data);
     });
 });
-
+router.get('/phimdangchieu', function(req,res){
+    let sql = 'SELECT * FROM moviess WHERE TrangThai= "Đang Chiếu"';
+    db.query(sql, (err,data)=>{
+        if(err) res.json({"Thông Báo":"Lỗi",err})
+        else res.json(data)
+    });
+});
+router.get('/phimsapchieu', function(req,res){
+    let sql = 'SELECT * FROM moviess WHERE TrangThai= "Sắp Chiếu"';
+    db.query(sql, (err,data)=>{
+        if(err) res.json({"Thông Báo":"Lỗi",err})
+        else res.json(data)
+    });
+});
 module.exports = router;

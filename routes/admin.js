@@ -4,7 +4,7 @@ var mysql = require('mysql');
 const app = express();
 
 var db = mysql.createConnection({
-    host:'localhost', user:'root', password:'', database:'datn-movie.booking'
+    host:'localhost', user:'root', password:'', database:'datn-booking'
 });
 db.connect((err) => {
     if (err) {
@@ -54,7 +54,7 @@ router.delete('/xoaphim/:id', function(req, res){
 // mục quản lý người dùng
 //
 router.get('/quanlynguoidung', function(req,res){
-    let sql = ' SELECT * FROM users';
+    let sql = ' SELECT * FROM users WHERE id_role = 1';
     db.query(sql,(err,data)=>{
         if(err) res.json({"Thông báo":"Lỗi ",err});
         else res.json(data);
@@ -127,4 +127,5 @@ router.get('/doanhthuphim', function(req,res){
         else res.json(data)
     });
 });
+
 module.exports = router;
