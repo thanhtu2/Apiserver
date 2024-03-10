@@ -67,5 +67,18 @@ router.get('/theloai/:id_theloai', function(req,res){
     });
 });
 // phim đang chiếu
-
+router.get('/phimdangchieu', function(req,res){
+    let sql = 'SELECT * FROM moviess WHERE TrangThai= "Đang Chiếu"';
+    db.query(sql, (err,data)=>{
+        if(err) res.json({"Thông Báo":"Lỗi",err})
+        else res.json(data)
+    });
+});
+router.get('/phimsapchieu', function(req,res){
+    let sql = 'SELECT * FROM moviess WHERE TrangThai= "Sắp Chiếu"';
+    db.query(sql, (err,data)=>{
+        if(err) res.json({"Thông Báo":"Lỗi",err})
+        else res.json(data)
+    });
+});
 module.exports = router;
