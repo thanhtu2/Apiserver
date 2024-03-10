@@ -68,29 +68,4 @@ router.get('/theloai/:id_theloai', function(req,res){
 });
 // phim đang chiếu
 
-router.get('/dangchieu', (req, res) => {
-    const query = 'SELECT * FROM moviess WHERE status = "Đang Chiếu"';
-    db.query(query, (error, results) => {
-      if (error) throw error;
-      res.json(results);
-    });
-  });
-  // phim sắp chiếu
-
-router.get('/sapchieu', (req, res) => {
-    const query = 'SELECT * FROM moviess WHERE status = "Sắp Chiếu"';
-    db.query(query, (error, results) => {
-      if (error) throw error;
-      res.json(results);
-    });
-  });
-  // phim  chiếu sớm
-
-  router.get('/chieusom', (req, res) => {
-      const query = 'SELECT * FROM moviess WHERE status = "Chiếu Sớm"';
-      db.query(query, (error, results) => {
-        if (error) throw error;
-        res.json(results);
-      });
-    });
 module.exports = router;
