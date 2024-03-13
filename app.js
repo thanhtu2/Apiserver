@@ -8,6 +8,10 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var movieRouter = require('./routes/movie'); //Tạo 1 router mới cho movie
 var adminRouter = require('./routes/admin')
+var roomRouter = require('./routes/room');
+var seatRouter = require('./routes/seat');
+var bookingRouter = require('./routes/booking');
+
 var app = express();
 
 // view engine setup
@@ -24,6 +28,10 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/movie', movieRouter);// sử dụng router
 app.use('/admin', adminRouter);
+app.use('/room', roomRouter);
+app.use('/seat', seatRouter);
+app.use('/booking', bookingRouter);
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
