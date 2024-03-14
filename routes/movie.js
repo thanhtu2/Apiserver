@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var mysql = require('mysql');
+var mysql = require('mysql2');
 const app = express();
 
 var db = mysql.createConnection({
@@ -16,9 +16,9 @@ db.connect((err) => {
 
 //danh sách phim mơi
 router.get('/phimmoi', function(req, res) {
-    let sophim = parseInt(req.params.sophim) || 5; // Lấy ra 5 bộ phim mới nhất theo NgayPhatHanh
+    let sophim = parseInt(req.params.sophim) || 5; // Lấy ra 5 bộ phim mới nhất theo NgayKhoiChieu
     if (sophim <= 1) sophim = 1;
-    let sql = 'SELECT id_phim, TenPhim, Poster, TrailerPhim, NgayPhatHanh  FROM moviess ORDER BY NgayPhatHanh DESC LIMIT 0, ?';
+    let sql = 'SELECT id_phim, TenPhim, Poster, TrailerPhim, NgayKhoiChieu  FROM moviess ORDER BY NgayKhoiChieu DESC LIMIT 0, ?';
     db.query(sql, sophim, (err, data) => {
         if (err) res.json({"thông báo": "Lỗi", err});
         else res.json(data);
@@ -60,7 +60,7 @@ router.get('/theloai/:id_theloai', function(req,res){
         res.json({"Thông báo":"Không tìm được","id_theloai":id_theloai});
         return;
     }
-    let sql = 'SELECT moviess.id_phim, moviess.id_theloai, moviess.TenPhim, moviess.NgayPhatHanh, moviess.Poster, theloai.ten_theloai FROM moviess INNER JOIN theloai ON moviess.id_theloai = theloai.id_theloai WHERE moviess.id_theloai = ?';
+    let sql = 'SELECT moviess.id_phim, moviess.id_theloai, moviess.TenPhim, moviess.NgayKhoiChieu, moviess.Poster, theloai.ten_theloai FROM moviess INNER JOIN theloai ON moviess.id_theloai = theloai.id_theloai WHERE moviess.id_theloai = ?';
     db.query(sql, id_theloai,(err,data)=>{
         if(err) res.json({"Thông báo":"Lỗi lấy id",err ,"id_theloai" :id_theloai});
         else res.json(data);
