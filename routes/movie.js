@@ -73,11 +73,27 @@ router.get('/phimdangchieu', function(req,res){
         else res.json(data)
     });
 });
-router.get('/phimsapchieu', function(req,res){
-    let sql = 'SELECT * FROM moviess WHERE TrangThai= "Sắp Chiếu"';
-    db.query(sql, (err,data)=>{
-        if(err) res.json({"Thông Báo":"Lỗi",err})
-        else res.json(data)
+router.get('/phimsapchieu', function(req, res) {
+    const currentDate = new Date().toISOString().split('T')[0]; // Lấy ngày hiện tại
+    let sql = `SELECT * FROM moviess WHERE NgayKhoiChieu >= '${currentDate}' AND TrangThai = 'Sắp Chiếu'`;
+    db.query(sql, (err, data) => {
+        if (err) {
+            res.json({"Thông Báo": "Lỗi", err});
+        } else {
+            // Cập nhật trạng thái của các phim đã bắt đầu chiếu thành 'Đang Chiếu'
+            data.forEach(movie => {
+                const movieDate = new Date(movie.NgayKhoiChieu).toISOString().split('T')[0];
+                if (movieDate <= currentDate) {
+                    const updateSql = `UPDATE moviess SET TrangThai = 'Đang Chiếu' WHERE id = ${movie.id_phim}`;
+                    db.query(updateSql, (updateErr, updateResult) => {
+                        if (updateErr) {
+                            console.error("Lỗi khi cập nhật trạng thái phim:", updateErr);
+                        }
+                    });
+                }
+            });
+            res.json(data);
+        }
     });
 });
 module.exports = router;
