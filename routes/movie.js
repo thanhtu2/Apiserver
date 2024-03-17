@@ -3,6 +3,7 @@ var router = express.Router();
 var mysql = require('mysql2');
 const app = express();
 
+
 var db = mysql.createConnection({
     host: 'localhost', user: 'root', password: '', database:'datn-booking'
 });
@@ -66,6 +67,7 @@ router.get('/theloai/:id_theloai', function(req,res){
         else res.json(data);
     });
 });
+// phim đang chiếu
 router.get('/phimdangchieu', function(req,res){
     let sql = 'SELECT * FROM moviess WHERE TrangThai= "Đang Chiếu"';
     db.query(sql, (err,data)=>{
@@ -96,4 +98,117 @@ router.get('/phimsapchieu', function(req, res) {
         }
     });
 });
+
+router.get('/phim/:id_phim/showtimes', (req, res) => {
+    const { id_phim } = req.params;
+
+    const sql = `
+        SELECT st.id_sc, st.id_rap, st.ngaychieu, st.giochieu, c.TenRap, c.DiaChi
+        FROM showtimes st
+        JOIN cinemas c ON st.id_rap = c.id_rap
+        WHERE st.id_phim = ?
+        ORDER BY st.giochieu ASC
+    `;
+
+    db.query(sql, [id_phim], (err, results) => {
+        if (err) {
+            res.status(500).send('Server error');
+            console.error(err);
+            return;
+        }
+        
+        const formattedResults = results.map(showtime => {
+            const ngaychieu = showtime.ngaychieu.toISOString().split('T')[0];
+            const giochieu = showtime.giochieu;
+            // Điều chỉnh ngày giờ theo múi giờ GMT+7
+            const dateTime = `${ngaychieu} ${giochieu}`;
+            return {
+                ...showtime,
+                start_time: dateTime, // Trả về ngày giờ đã được điều chỉnh múi giờ
+                TenRap: showtime.TenRap,
+                DiaChi: showtime.DiaChi
+            };
+        });
+
+        res.json(formattedResults);
+    });
+});
+router.get('/phim/:id_phim/seats', (req, res) => {
+    const { id_phim } = req.params;
+
+    const sql = `
+        SELECT id_ghe, id_phong, HangGhe, SoGhe, status
+        FROM seats
+        WHERE id_phong IN (
+            SELECT id_phong
+            FROM showtimes
+            WHERE id_phim = ?
+        )
+        ORDER BY id_phong, HangGhe, SoGhe
+    `;
+
+    db.query(sql, [id_phim], (err, results) => {
+        if (err) {
+            res.status(500).send('Server error');
+            console.error(err);
+            return;
+        }
+        
+        res.json(results);
+    });
+});
+router.post('/phim/:id_phim/seats/book', (req, res) => {
+    const { id_phim } = req.params;
+    const { seatId } = req.body; // Giả sử seatId là ID của ghế mà người dùng muốn đặt
+
+    // Kiểm tra ghế có sẵn và chưa được đặt
+    const checkSeatAvailabilityQuery = `
+        SELECT id_ghe, status
+        FROM seats
+        WHERE id_ghe = ? AND id_phong IN (
+            SELECT id_phong
+            FROM showtimes
+            WHERE id_phim = ?
+        )
+    `;
+
+    db.query(checkSeatAvailabilityQuery, [seatId, id_phim], (checkErr, checkResults) => {
+        if (checkErr) {
+            res.status(500).send('Server error');
+            console.error(checkErr);
+            return;
+        }
+
+        if (checkResults.length === 0) {
+            res.status(404).json({ message: 'Ghế không tồn tại hoặc không có sẵn cho suất chiếu này.' });
+            return;
+        }
+
+        const seat = checkResults[0];
+
+        if (seat.status !== 'Trống') {
+            res.status(400).json({ message: 'Ghế đã được đặt hoặc không có sẵn.' });
+            return;
+        }
+
+        // Thực hiện đặt ghế
+        const bookSeatQuery = `
+            UPDATE seats
+            SET status = 'Booked'
+            WHERE id_ghe = ?
+        `;
+
+        db.query(bookSeatQuery, [seatId], (bookErr, bookResults) => {
+            if (bookErr) {
+                res.status(500).send('Server error');
+                console.error(bookErr);
+                return;
+            }
+
+            res.json({ message: 'Đặt ghế thành công.', data });
+        });
+    });
+});
+
+
 module.exports = router;
