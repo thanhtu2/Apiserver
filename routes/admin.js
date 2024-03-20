@@ -116,15 +116,53 @@ router.delete('/rap/xoarap/:id_rap', function(req,res){
     });
 });
 //doanhso
-router.get('/doanhthuphim', function(req,res){
-    let sql = `SELECT m.TenPhim AS TenPhim, IFNULL(FORMAT(SUM(b.TongGia), 0), 0) AS DoanhThu
-    FROM moviess m
-    LEFT JOIN booking b ON b.id_phim = m.id_phim
-    GROUP BY m.id_phim;
+// router.get('/doanhthuphim', function(req,res){
+//     let sql = `SELECT m.TenPhim AS TenPhim, IFNULL(FORMAT(SUM(b.TongGia), 0), 0) AS DoanhThu
+//     FROM moviess m
+//     LEFT JOIN booking b ON b.id_phim = m.id_phim
+//     GROUP BY m.id_phim;
+//     `;
+//     db.query(sql, (err,data)=>{
+//         if(err) res.json({"Thông báo":"Lỗi",err})
+//         else res.json(data)
+//     });
+// });
+
+router.get('/doanhthungay', function(req, res){
+    let sql = `
+        SELECT m.TenPhim AS TenPhim, DATE_FORMAT(b.NgayDatVe, '%Y-%m-%d') AS Ngay, IFNULL(FORMAT(SUM(b.TongGia), 0), 0) AS DoanhThu
+        FROM moviess m
+        LEFT JOIN booking b ON b.id_phim = m.id_phim
+        GROUP BY m.id_phim, DATE_FORMAT(b.NgayDatVe, '%Y-%m-%d');
     `;
-    db.query(sql, (err,data)=>{
-        if(err) res.json({"Thông báo":"Lỗi",err})
-        else res.json(data)
+    db.query(sql, (err, data) => {
+        if (err) {
+            res.json({"Thông báo": "Lỗi", err});
+        } else {
+            res.json(data);
+        }
+    });
+});
+
+router.get('/doanhthuthang', function(req, res) {
+    let sql = `
+        SELECT 
+            m.TenPhim AS TenPhim, 
+            DATE_FORMAT(b.NgayDatVe, '%Y-%m') AS Thang, 
+            IFNULL(FORMAT(SUM(b.TongGia), 0), 0) AS DoanhThu
+        FROM 
+            moviess m
+        LEFT JOIN 
+            booking b ON b.id_phim = m.id_phim
+        GROUP BY 
+            m.id_phim, Thang;
+    `;
+    db.query(sql, (err, data) => {
+        if (err) {
+            res.json({ "Thông báo": "Lỗi", err });
+        } else {
+            res.json(data);
+        }
     });
 });
 
