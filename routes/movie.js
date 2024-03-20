@@ -133,6 +133,31 @@ router.get('/phim/:id_phim/showtimes', (req, res) => {
         res.json(formattedResults);
     });
 });
+// router.post('/phim/:id_phim/showtimes/book', (req, res) => {
+//     const { id_phim } = req.params;
+//     const { id_rap, ngaychieu, giochieu } = req.body; // Giả sử bạn nhận được thông tin về rạp, ngày chiếu và giờ chiếu từ client
+
+//     // Thực hiện kiểm tra tính hợp lệ của thông tin được cung cấp
+//     // (ví dụ: kiểm tra xem rạp, ngày chiếu và giờ chiếu có hợp lệ không)
+
+//     // Sau đó, thực hiện đặt suất chiếu
+//     const bookShowtimeQuery = `
+//         INSERT INTO showtimes (id_phim, id_rap, ngaychieu, giochieu)
+//         VALUES (?, ?, ?, ?)
+//     `;
+
+//     db.query(bookShowtimeQuery, [id_phim, id_rap, ngaychieu, giochieu], (err, result) => {
+//         if (err) {
+//             res.status(500).send('Server error');
+//             console.error(err);
+//             return;
+//         }
+
+//         res.json({ message: 'Đặt suất chiếu thành công.' });
+//     });
+// });
+
+
 router.get('/phim/:id_phim/seats', (req, res) => {
     const { id_phim } = req.params;
 
@@ -159,11 +184,11 @@ router.get('/phim/:id_phim/seats', (req, res) => {
 });
 router.post('/phim/:id_phim/seats/book', (req, res) => {
     const { id_phim } = req.params;
-    const { seatId } = req.body; // Giả sử seatId là ID của ghế mà người dùng muốn đặt
+    const { seatId, showtimeId, userId, NgayMua } = req.body; // Thêm showtimeId (ID của suất chiếu) và userId (ID của người dùng) vào body của yêu cầu
 
-    // Kiểm tra ghế có sẵn và chưa được đặt
+    // Kiểm tra tính hợp lệ của ghế
     const checkSeatAvailabilityQuery = `
-        SELECT id_ghe, status
+        SELECT id_ghe, id_phong, status
         FROM seats
         WHERE id_ghe = ? AND id_phong IN (
             SELECT id_phong
@@ -191,24 +216,52 @@ router.post('/phim/:id_phim/seats/book', (req, res) => {
             return;
         }
 
-        // Thực hiện đặt ghế
-        const bookSeatQuery = `
-            UPDATE seats
-            SET status = 'Booked'
-            WHERE id_ghe = ?
+        // Thực hiện mua vé và lưu thông tin vào bảng vé
+        const buyTicketQuery = `
+            INSERT INTO tickets (id_ghe, id_phim, id_phong, id_user, id_sc, NgayMua)
+            VALUES (?, ?, ?, ?, ?, ?)
         `;
 
-        db.query(bookSeatQuery, [seatId], (bookErr, bookResults) => {
-            if (bookErr) {
+        db.query(buyTicketQuery, [seatId, id_phim, seat.id_phong, userId, showtimeId,NgayMua], (buyErr, buyResults) => {
+            if (buyErr) {
                 res.status(500).send('Server error');
-                console.error(bookErr);
+                console.error(buyErr);
                 return;
             }
 
-            res.json({ message: 'Đặt ghế thành công.', data });
+            // Cập nhật trạng thái của ghế thành 'Đã mua'
+            const updateSeatStatusQuery = `
+                UPDATE seats
+                SET status = 'Đã mua'
+                WHERE id_ghe = ?
+            `;
+
+            db.query(updateSeatStatusQuery, [seatId], (updateErr, updateResults) => {
+                if (updateErr) {
+                    res.status(500).send('Server error');
+                    console.error(updateErr);
+                    return;
+                }
+
+                res.json({ message: 'Mua vé thành công.' });
+            });
         });
     });
 });
+router.get('/tickets/:id_ve', (req, res) => {
+    const { id_ve } = req.params;
+    const sql = 'SELECT *, DATE_FORMAT(NgayMua, "%Y-%m-%d") AS NgayMua FROM tickets WHERE id_ve = ?';
+
+    db.query(sql, id_ve, (err, data) => {
+        if (err) {
+            res.json({ "Thông báo": "Lỗi", err });
+        } else {
+            res.json(data);
+        }
+    });
+});
+
+
 
 
 module.exports = router;
