@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var mysql = require('mysql2');
+const qr = require('qrcode');
+
 const app = express();
 
 
@@ -261,7 +263,20 @@ router.get('/tickets/:id_ve', (req, res) => {
     });
 });
 
+// Route để hiển thị mã QR
+router.get('/qr', (req, res) => {
+    const qrData = 'https://www.facebook.com/profile.php?id=100017656290108'; // Replace this with your payment URL or data
 
+    // Tạo mã QR từ dữ liệu thanh toán
+    qr.toDataURL(qrData, { errorCorrectionLevel: 'H' }, (err, qrImage) => {
+        if (err) {
+            res.status(500).send('Internal Server Error');
+            return;
+        }
 
+        // Trả về dữ liệu hình ảnh mã QR dưới dạng URL
+        res.send(qrImage);
+    });
+});
 
 module.exports = router;

@@ -128,6 +128,32 @@ router.delete('/rap/xoarap/:id_rap', function(req,res){
 //     });
 // });
 
+//
+router.post('/themsc',function(req,res){
+    let data = req.body;    
+    let sql = 'INSERT INTO showtimes SET ?'
+    db.query(sql, data,(err,data)=>{
+        if(err)res.json({"Thông báo":"Lỗi",err})
+        else res.json({"Thông báo":"Thêm thành công","id":data.insertId})
+    });
+});
+router.put('/suasc/:id_sc', function(req,res){
+    let id = req.params.id_sc;
+    let data = req.body;
+    let sql = ' UPDATE showtimes SET ? WHERE id_sc = ? ';
+    db.query(sql, [data,id],(err,data)=>{
+        if(err) res.json({"Thông báo":"Lỗi",err})
+        else res.json({"Thông báo":"Cập Nhật thành công"});
+    });
+});
+router.delete('/xoasc/:id_sc', function(req,res){
+    let id = req.params.id_sc;
+    let sql = 'DELETE FROM showtimes WHERE id_sc = ?';
+    db.query(sql,id,(err,data)=>{
+        if(err)res.json({"Thông báo":"Lỗi",err})
+        else res.json({"Thông báo":"Xóa thành công"})
+    });
+});
 router.get('/doanhthungay', function(req, res){
     let sql = `
         SELECT m.TenPhim AS TenPhim, DATE_FORMAT(b.NgayDatVe, '%Y-%m-%d') AS Ngay, IFNULL(FORMAT(SUM(b.TongGia), 0), 0) AS DoanhThu

@@ -61,5 +61,4 @@ router.delete('/seats/:id', (req, res) => { // Sử dụng phương thức DELET
     });
 });
 
-
 module.exports = router;
