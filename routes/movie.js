@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var mysql = require('mysql2');
-const qr = require('qrcode');
+const qr = require('qr-image');
 
 const app = express();
 
@@ -184,11 +184,16 @@ router.get('/phim/:id_phim/seats', (req, res) => {
         res.json(results);
     });
 });
+
 router.post('/phim/:id_phim/seats/book', (req, res) => {
     const { id_phim } = req.params;
-    const { seatId, showtimeId, userId, NgayMua } = req.body; // Thêm showtimeId (ID của suất chiếu) và userId (ID của người dùng) vào body của yêu cầu
-
-    // Kiểm tra tính hợp lệ của ghế
+    const { seatId, showtimeId, userId, NgayMua } = req.body;
+    function generateOrderId() {
+        // Generate a random unique orderId
+        return Math.floor(Math.random() * 1000000);
+    }
+    
+    
     const checkSeatAvailabilityQuery = `
         SELECT id_ghe, id_phong, status
         FROM seats
@@ -218,20 +223,20 @@ router.post('/phim/:id_phim/seats/book', (req, res) => {
             return;
         }
 
-        // Thực hiện mua vé và lưu thông tin vào bảng vé
+        const orderId = generateOrderId(); // Assuming generateOrderId() generates a unique orderId
+
         const buyTicketQuery = `
-            INSERT INTO tickets (id_ghe, id_phim, id_phong, id_user, id_sc, NgayMua)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO tickets (id_ghe, id_phim, id_phong, id_user, id_sc, NgayMua, orderId)
+            VALUES (?, ?, ?, ?, ?, ?, ?) 
         `;
 
-        db.query(buyTicketQuery, [seatId, id_phim, seat.id_phong, userId, showtimeId,NgayMua], (buyErr, buyResults) => {
+        db.query(buyTicketQuery, [seatId, id_phim, seat.id_phong, userId, showtimeId, NgayMua, orderId], (buyErr, buyResults) => {
             if (buyErr) {
-                res.status(500).send('Server error');
+                res.status(500).send('Server error'); 
                 console.error(buyErr);
                 return;
             }
 
-            // Cập nhật trạng thái của ghế thành 'Đã mua'
             const updateSeatStatusQuery = `
                 UPDATE seats
                 SET status = 'Đã mua'
@@ -245,11 +250,15 @@ router.post('/phim/:id_phim/seats/book', (req, res) => {
                     return;
                 }
 
-                res.json({ message: 'Mua vé thành công.' });
+                const paymentUrl = `https://payment.com?orderId=${orderId}`;
+
+                res.json({ message: 'Mua vé thành công.', paymentUrl });
             });
         });
     });
 });
+
+
 router.get('/tickets/:id_ve', (req, res) => {
     const { id_ve } = req.params;
     const sql = 'SELECT *, DATE_FORMAT(NgayMua, "%Y-%m-%d") AS NgayMua FROM tickets WHERE id_ve = ?';
@@ -264,19 +273,83 @@ router.get('/tickets/:id_ve', (req, res) => {
 });
 
 // Route để hiển thị mã QR
-router.get('/qr', (req, res) => {
-    const qrData = 'https://www.facebook.com/profile.php?id=100017656290108'; // Replace this with your payment URL or data
+router.get('/api/payment-qr/:id_ve', (req, res) => {
+    const { id_ve } = req.params;
 
-    // Tạo mã QR từ dữ liệu thanh toán
-    qr.toDataURL(qrData, { errorCorrectionLevel: 'H' }, (err, qrImage) => {
+    // Truy vấn cơ sở dữ liệu để lấy orderId dựa trên id_ve
+    const getOrderIdQuery = 'SELECT orderId FROM tickets WHERE id_ve = ?';
+
+    // Thực hiện truy vấn SQL với id_ve từ yêu cầu HTTP
+    db.query(getOrderIdQuery, [id_ve], (err, results) => {
         if (err) {
-            res.status(500).send('Internal Server Error');
+            res.status(500).send('Server error');
+            console.error(err);
+            return;
+        }
+ 
+        if (results.length === 0) {
+            res.status(404).send('Order not found');
             return;
         }
 
-        // Trả về dữ liệu hình ảnh mã QR dưới dạng URL
-        res.send(qrImage);
+        const orderId = results[0].orderId;
+
+        // Dữ liệu thanh toán (URL hoặc thông tin cần chuyển đổi thành QR code)
+        const paymentData = `https://payment.com?orderId=${orderId}`;
+
+        // Tạo mã QR từ dữ liệu thanh toán
+        const qrCode = qr.image(paymentData, { type: 'png' });
+
+        // Trả về mã QR dưới dạng hình ảnh
+        res.type('png');
+        qrCode.pipe(res);
     });
 });
+
+router.post('/api/payment', (req, res) => {
+    const { orderId, transactionId } = req.body;
+
+    // Cập nhật thông tin giao dịch vào bảng booking
+    const getTicketsQuery = 'SELECT * FROM tickets WHERE orderId = ?';
+
+    db.query(getTicketsQuery, [orderId], (err, tickets) => {
+        if (err) {
+            console.error(err);
+            res.status(500).send('Server error');
+            return;
+        }
+
+        if (tickets.length === 0) {
+            res.status(404).send('No tickets found for the specified order');
+            return;
+        }
+
+        tickets.forEach(ticket => {
+            const { id_ve, id_phim, id_phong, id_ghe, id_sc, id_user } = ticket;
+            const insertBookingQuery = `
+                INSERT INTO booking (id_ve, id_phim, id_phong, id_ghe, id_sc, id_user, transaction_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            `;
+            const values = [id_ve, id_phim, id_phong, id_ghe, id_sc, id_user, transactionId];
+
+            db.query(insertBookingQuery, values, (insertErr, result) => {
+                if (insertErr) {
+                    console.error(insertErr);
+                    res.status(500).send('Failed to update booking information');
+                    return;
+                }
+                console.log(`Booking for ticket ${id_ve} inserted successfully.`);
+            });
+        });
+
+        res.status(200).send('Booking information updated successfully');
+    });
+});
+
+
+
+
+
+
 
 module.exports = router;

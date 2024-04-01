@@ -128,13 +128,31 @@ router.delete('/rap/xoarap/:id_rap', function(req,res){
 //     });
 // });
 
-//
-router.post('/themsc',function(req,res){
-    let data = req.body;    
-    let sql = 'INSERT INTO showtimes SET ?'
-    db.query(sql, data,(err,data)=>{
-        if(err)res.json({"Thông báo":"Lỗi",err})
-        else res.json({"Thông báo":"Thêm thành công","id":data.insertId})
+router.post('/:id_phim/themsc', function(req, res) {
+    // Lấy id_phim từ params
+    const { id_phim } = req.params;
+    // Lấy thông tin về lịch chiếu từ body của request
+    const { id_rap, id_phong, ngaychieu, giochieu } = req.body;    
+    
+    // Kiểm tra xem các giá trị cần thiết đã được cung cấp chưa
+    if (!id_rap || !id_phong || !ngaychieu || !giochieu) {
+        return res.status(400).json({ "Thông báo": "Vui lòng cung cấp đầy đủ thông tin lịch chiếu." });
+    }
+
+    // Tạo câu lệnh SQL để chèn dữ liệu vào bảng showtimes
+    const insertQueryShowtime = `
+        INSERT INTO showtimes (id_phim, id_rap, id_phong, giochieu, ngaychieu)
+        VALUES (?, ?, ?, ?, ?)
+    `;
+    
+    // Thực hiện truy vấn SQL để thêm lịch chiếu mới
+    db.query(insertQueryShowtime, [id_phim, id_rap, id_phong, giochieu, ngaychieu], (err, result) => {
+        if(err) {
+            // Trả về thông báo lỗi nếu có lỗi xảy ra trong quá trình thêm lịch chiếu
+            return res.status(500).json({"Thông báo": "Lỗi khi thêm lịch chiếu", "Lỗi": err});
+        }
+        // Trả về thông báo thành công nếu không có lỗi
+        res.json({"Thông báo": "Thêm lịch chiếu thành công", "insertId": result.insertId });
     });
 });
 router.put('/suasc/:id_sc', function(req,res){
